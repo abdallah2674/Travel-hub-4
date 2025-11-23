@@ -40,37 +40,40 @@ class _SettingsHeaderState extends State<SettingsHeader> {
     try {
       final ImagePicker picker = ImagePicker();
 
-    final source = await showModalBottomSheet<ImageSource>(
-      context: context,
-      builder: (BuildContext sheetContext) {
-        return SafeArea(
-          child: Wrap(
-            children: [
-              ListTile(
-                leading: const Icon(Icons.camera_alt),
-                title: Text('Camera'.tr()),
-                onTap: () => Navigator.pop(sheetContext, ImageSource.camera),
-              ),
-              ListTile(
-                leading: const Icon(Icons.photo),
-                title: Text('Gallery'.tr()),
-                onTap: () => Navigator.pop(sheetContext, ImageSource.gallery),
-              ),
-            ],
-          ),
-        );
-      },
-    );
+      final source = await showModalBottomSheet<ImageSource>(
+        context: context,
+        builder: (BuildContext sheetContext) {
+          return SafeArea(
+            child: Wrap(
+              children: [
+                ListTile(
+                  leading: const Icon(Icons.camera_alt),
+                  title: Text('Camera'.tr()),
+                  onTap: () => Navigator.pop(sheetContext, ImageSource.camera),
+                ),
+                ListTile(
+                  leading: const Icon(Icons.photo),
+                  title: Text('Gallery'.tr()),
+                  onTap: () => Navigator.pop(sheetContext, ImageSource.gallery),
+                ),
+              ],
+            ),
+          );
+        },
+      );
 
-    if (source != null) {
-      final XFile? pickedFile = await picker.pickImage(source: source, imageQuality: 80);
+      if (source == null) return;
 
-      if (pickedFile != null) {
-        setState(() {
-          localImage = File(pickedFile.path);
-        });
-      }
-    }
+      final XFile? pickedFile = await picker.pickImage(
+        source: source,
+        imageQuality: 80,
+      );
+
+      if (pickedFile == null) return;
+
+      setState(() {
+        localImage = File(pickedFile.path);
+      });
 
       final user = FirebaseAuth.instance.currentUser;
 
