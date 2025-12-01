@@ -1,6 +1,6 @@
-
 import 'dart:io';
 
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -23,12 +23,10 @@ import 'package:travel_hub/navigation/hotels/models/hotels_model.dart';
 import 'package:travel_hub/navigation/main_screen.dart';
 import 'package:travel_hub/navigation/maps/full_map_screen.dart';
 
-
 abstract class AppRouter {
   static const kWelcomeView = '/welcomeView';
   static const kLoginView = '/loginView';
   static const kRegisterView = '/registerView';
- 
 
   //Navigation Feature
   static const kNavigationView = '/navigation';
@@ -40,31 +38,33 @@ abstract class AppRouter {
   //Hotels Feature
   static const kHotelsView = '/hotels';
   static const kBookView = '/book';
-   static const kHotelsDetailsView = '/details';
+  static const kHotelsDetailsView = '/details';
   //Land Mark Feature
   static const kLandMarkView = '/landMark';
   static const kLandMarkDetailsView = '/marksDetails';
 
-
   static final routers = GoRouter(
     routes: [
       GoRoute(path: '/', builder: (context, state) => const SplashScreen()),
-      GoRoute(path:kWelcomeView, builder: (context, state) => const TravelWelcomeScreen()),
+      GoRoute(
+        path: kWelcomeView,
+        builder: (context, state) => const TravelWelcomeScreen(),
+      ),
       GoRoute(
         path: kLoginView,
         builder: (context, state) => const LoginScreen(),
       ),
       GoRoute(
-      path: kRegisterView,
-       builder: (context, state) => const RegisterScreen(),
-       ),
+        path: kRegisterView,
+        builder: (context, state) => const RegisterScreen(),
+      ),
 
       //Home Feature
       GoRoute(path: kHomeView, builder: (context, state) => const HomeScreen()),
-    GoRoute(
+      GoRoute(
         path: kCameraView,
         builder: (context, state) {
-          final imageFile = state.extra as File; 
+          final imageFile = state.extra as File;
           return AiCamera(selectedImage: imageFile);
         },
       ),
@@ -79,14 +79,11 @@ abstract class AppRouter {
         builder: (context, state) => const FullMapScreen(),
       ),
 
-   GoRoute(
+      GoRoute(
         path: kHotelsView,
-        builder: (context, state) => BlocProvider(
-          create: (context) => HotelsCubit()..loadHotels(),
-          child: const HotelsScreen(),
-        ),
+        builder: (context, state) => const HotelsScreen(),
       ),
-            GoRoute(
+      GoRoute(
         path: kHotelsDetailsView,
         pageBuilder: (context, state) {
           final hotels = state.extra as Hotels;
@@ -113,12 +110,9 @@ abstract class AppRouter {
       ),
       GoRoute(
         path: kLandMarkView,
-        builder: (context, state) => BlocProvider(
-          create: (context) => LandMarkCubit()..loadLandMark(),
-          child: const LandMarkScreen(),
-        ),
+        builder: (context, state) => const LandMarkScreen(),
       ),
-       GoRoute(
+      GoRoute(
         path: kLandMarkDetailsView,
         pageBuilder: (context, state) {
           final landMark = state.extra as LandMark;

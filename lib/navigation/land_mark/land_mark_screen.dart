@@ -17,6 +17,18 @@ class LandMarkScreen extends StatefulWidget {
 }
 
 class _LandMarkScreenState extends State<LandMarkScreen> {
+  bool _isLoaded = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+
+    if (!_isLoaded) {
+      final lang = context.locale.languageCode;
+      context.read<LandMarkCubit>().loadLandMark(lang);
+      _isLoaded = true;
+    }
+  }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
