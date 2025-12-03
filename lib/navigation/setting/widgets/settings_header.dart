@@ -1,4 +1,6 @@
+import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:easy_localization/easy_localization.dart';
@@ -8,6 +10,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:travel_hub/constant.dart';
 import 'package:travel_hub/core/utils/assets.dart';
 
 class SettingsHeader extends StatefulWidget {
@@ -29,11 +32,32 @@ class _SettingsHeaderState extends State<SettingsHeader> {
   String? userEmail;
   File? localImage;
   String? savedImageUrl;
+  Uint8List? savedMemoryImage;
 
   @override
   void initState() {
     super.initState();
     _loadUserData();
+  }
+
+  Future<void> _loadUserData() async {
+    final prefs = await SharedPreferences.getInstance();
+    final user = FirebaseAuth.instance.currentUser;
+
+    setState(() {
+      userName = prefs.getString('userName') ?? 'User Name';
+      userEmail = prefs.getString('userEmail') ?? 'user@email.com';
+    });
+    if (user != null && user.email != null) {
+      final base64Image = prefs.getString('profile_image_base64_${user.email}');
+      if (base64Image != null) {
+        savedMemoryImage = base64Decode(base64Image);
+      } else {
+        savedMemoryImage = null;
+        localImage = null;
+        savedImageUrl = user.photoURL;
+      }
+    }
   }
 
   Future<void> pickAndUploadImage() async {
@@ -71,32 +95,37 @@ class _SettingsHeaderState extends State<SettingsHeader> {
 
       if (pickedFile == null) return;
 
+      final bytes = await pickedFile.readAsBytes();
+      final base64Image = base64Encode(bytes);
+
       setState(() {
         localImage = File(pickedFile.path);
+        savedMemoryImage = bytes;
       });
-
-      final user = FirebaseAuth.instance.currentUser;
-
-      if (user == null) return;
-
-      final storageRef = FirebaseStorage.instance
-          .ref()
-          .child("profile_images")
-          .child("${user.uid}.jpg");
-
-      await storageRef.putFile(localImage!);
-
-      final downloadURL = await storageRef.getDownloadURL();
-
-      await user.updatePhotoURL(downloadURL);
-      await user.reload();
 
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setString("profileImage", downloadURL);
+      final user = FirebaseAuth.instance.currentUser;
 
-      setState(() {
-        savedImageUrl = downloadURL;
-      });
+      if (user != null && user.email != null) {
+        await prefs.setString(
+          'profile_image_base64_${user.email}',
+          base64Image,
+        );
+        final storageRef = FirebaseStorage.instance
+            .ref()
+            .child("profile_images")
+            .child("${user.uid}.jpg");
+
+        await storageRef.putFile(localImage!);
+        final downloadURL = await storageRef.getDownloadURL();
+
+        await user.updatePhotoURL(downloadURL);
+        await user.reload();
+
+        setState(() {
+          savedImageUrl = downloadURL;
+        });
+      }
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -104,20 +133,11 @@ class _SettingsHeaderState extends State<SettingsHeader> {
         ),
       );
     } catch (e) {
-      print("Error: $e");
+      debugPrint("Error: $e");
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text("Error: $e")));
     }
-  }
-
-  Future<void> _loadUserData() async {
-    final prefs = await SharedPreferences.getInstance();
-    setState(() {
-      userName = prefs.getString('userName') ?? 'User Name';
-      userEmail = prefs.getString('userEmail') ?? 'user@email.com';
-      savedImageUrl = prefs.getString("profileImage");
-    });
   }
 
   @override
@@ -135,14 +155,18 @@ class _SettingsHeaderState extends State<SettingsHeader> {
             children: [
               CircleAvatar(
                 radius: 35.r,
-                backgroundColor: Colors.grey.shade300,
-                backgroundImage: localImage != null
+                backgroundColor: kGrey.shade300,
+                backgroundImage: savedMemoryImage != null
+                    ? MemoryImage(savedMemoryImage!)
+                    : localImage != null
                     ? FileImage(localImage!)
                     : savedImageUrl != null
                     ? NetworkImage(savedImageUrl!)
                     : null,
-
-                child: (localImage == null && savedImageUrl == null)
+                child:
+                    (localImage == null &&
+                        savedMemoryImage == null &&
+                        savedImageUrl == null)
                     ? Icon(Icons.person, size: 35.r)
                     : null,
               ),
