@@ -8,6 +8,8 @@ import 'package:travel_hub/features/ai_camera/ai_camera.dart';
 import 'package:travel_hub/features/auth/login/presentation/views/login_screen.dart';
 import 'package:travel_hub/features/auth/register/view/register_screen.dart';
 import 'package:travel_hub/features/welcome/welcome_screen.dart';
+import 'package:travel_hub/navigation/favorites/hotels_favorites/hotels_favorites_screen.dart';
+import 'package:travel_hub/navigation/favorites/landmarks_favorites/landmarks_favorites_screen.dart';
 import 'package:travel_hub/navigation/land_mark/data/carousel_slider_cubit/carousel_slider_cubit.dart';
 import 'package:travel_hub/navigation/land_mark/data/cubit/land_mark_cubit.dart';
 import 'package:travel_hub/navigation/land_mark/land_mark_details_screen.dart';
@@ -42,6 +44,10 @@ abstract class AppRouter {
   //Land Mark Feature
   static const kLandMarkView = '/landMark';
   static const kLandMarkDetailsView = '/marksDetails';
+  
+  //Favorites Feature
+  static const kHotelsFavoritesView = '/hotelsFavorites';
+  static const kLandFavoritesView = '/landFavorites';
 
   static final routers = GoRouter(
     routes: [
@@ -140,6 +146,15 @@ abstract class AppRouter {
                 },
           );
         },
+      ),
+
+      GoRoute(
+        path: kHotelsFavoritesView,
+        builder: (context, state) => FavoritesScreen(),
+      ),
+      GoRoute(
+        path: kLandFavoritesView,
+        builder: (context, state) => LandMarkFavoritesScreen(),
       ),
 
       GoRoute(path: kBookView, builder: (context, state) => const BookScreen()),

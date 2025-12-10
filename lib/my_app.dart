@@ -1,11 +1,33 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:travel_hub/core/utils/app_router.dart';
 import 'package:travel_hub/core/utils/app_theme.dart';
+import 'package:travel_hub/navigation/favorites/hotels_favorites/data/cubit/hotels_favorites_cubit.dart';
+import 'package:travel_hub/navigation/favorites/hotels_favorites/data/hotels_favorites_data.dart';
+import 'package:travel_hub/navigation/favorites/landmarks_favorites/data/cubit/landmarks_favorites_cubit.dart';
+import 'package:travel_hub/navigation/favorites/landmarks_favorites/data/landmarks_favorites_data.dart';
+import 'package:travel_hub/navigation/hotels/data/cubit/hotels_cubit.dart';
+import 'package:travel_hub/navigation/land_mark/data/cubit/land_mark_cubit.dart';
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  bool isDarkMode = false;
+
+  void toggleTheme() {
+    setState(() {
+      isDarkMode = !isDarkMode;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -14,14 +36,70 @@ class MyApp extends StatelessWidget {
       minTextAdapt: true,
       splitScreenMode: true,
       builder: (context, child) {
-        return MaterialApp.router(
-          debugShowCheckedModeBanner: false,
-          localizationsDelegates: context.localizationDelegates,
-          supportedLocales: context.supportedLocales,
-          locale: context.locale,
-          theme: AppTheme.lightTheme,
-          darkTheme: AppTheme.darkTheme,
-          routerConfig: AppRouter.routers,
+        return StreamBuilder<User?>(
+          stream: FirebaseAuth.instance.authStateChanges(),
+          builder: (context, snapshot) {
+            final user = snapshot.data;
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return MaterialApp(
+                debugShowCheckedModeBanner: false,
+                localizationsDelegates: context.localizationDelegates,
+                supportedLocales: context.supportedLocales,
+                locale: context.locale,
+                theme: AppTheme.lightTheme,
+                darkTheme: AppTheme.darkTheme,
+                themeMode: isDarkMode ? ThemeMode.dark : ThemeMode.light,
+                home: const Scaffold(
+                  body: Center(child: CircularProgressIndicator()),
+                ),
+              );
+            }
+            if (user == null) {
+              return MaterialApp.router(
+                debugShowCheckedModeBanner: false,
+                localizationsDelegates: context.localizationDelegates,
+                supportedLocales: context.supportedLocales,
+                locale: context.locale,
+                theme: AppTheme.lightTheme,
+                darkTheme: AppTheme.darkTheme,
+                themeMode: isDarkMode ? ThemeMode.dark : ThemeMode.light,
+                routerConfig: AppRouter.routers,
+              );
+            }
+            return MultiBlocProvider(
+              key: ValueKey(user.uid),
+              providers: [
+                BlocProvider(
+                  create: (_) => FavoritesCubit(
+                    FavoritesRepository(
+                      firestore: FirebaseFirestore.instance,
+                      auth: FirebaseAuth.instance,
+                    ),
+                  )..loadFavorites(),
+                ),
+                BlocProvider(
+                  create: (_) => LandMarkFavoritesCubit(
+                    LandMarkFavoritesRepository(
+                      firestore: FirebaseFirestore.instance,
+                      auth: FirebaseAuth.instance,
+                    ),
+                  )..loadFavorites(),
+                ),
+                BlocProvider(create: (_) => HotelsCubit()),
+                BlocProvider(create: (_) => LandMarkCubit()),
+              ],
+              child: MaterialApp.router(
+                debugShowCheckedModeBanner: false,
+                localizationsDelegates: context.localizationDelegates,
+                supportedLocales: context.supportedLocales,
+                locale: context.locale,
+                theme: AppTheme.lightTheme,
+                darkTheme: AppTheme.darkTheme,
+                themeMode: isDarkMode ? ThemeMode.dark : ThemeMode.light,
+                routerConfig: AppRouter.routers,
+              ),
+            );
+          },
         );
       },
     );

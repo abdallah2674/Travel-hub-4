@@ -6,6 +6,8 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:travel_hub/constant.dart';
 import 'package:travel_hub/core/utils/app_router.dart';
+import 'package:travel_hub/navigation/favorites/landmarks_favorites/data/cubit/landmarks_favorites_cubit.dart';
+import 'package:travel_hub/navigation/favorites/landmarks_favorites/data/cubit/landmarks_favorites_state.dart';
 import 'package:travel_hub/navigation/land_mark/data/cubit/land_mark_cubit.dart';
 import 'package:travel_hub/navigation/land_mark/data/cubit/land_mark_state.dart';
 
@@ -29,6 +31,7 @@ class _LandMarkScreenState extends State<LandMarkScreen> {
       _isLoaded = true;
     }
   }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -51,6 +54,15 @@ class _LandMarkScreenState extends State<LandMarkScreen> {
             ],
           ),
         ),
+        actions: [
+          Column(
+            children: [
+              IconButton(icon: const Icon(Icons.favorite), onPressed: () {
+                GoRouter.of(context).push(AppRouter.kLandFavoritesView);
+              }),
+            ],
+          ),
+        ],
       ),
       backgroundColor: kWhite,
       body: Padding(
@@ -87,44 +99,82 @@ class _LandMarkScreenState extends State<LandMarkScreen> {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Stack(
-                                      alignment: Alignment.bottomLeft,
+                                      alignment: Alignment.topLeft,
                                       children: [
-                                        ClipRRect(
-                                          borderRadius: BorderRadius.vertical(
-                                            top: Radius.circular(24.r),
-                                          ),
-                                          child: CachedNetworkImage(
-                                            placeholder: (context, url) => CircularProgressIndicator(),
-        errorWidget: (context, url, error) => Icon(Icons.error),
-                                            height: 180.h,
-                                            width: double.infinity,
-                                            fit: BoxFit.cover, 
-                                            imageUrl: landMark.mainImage ,
-                                          ),
+                                        Stack(
+                                          alignment: Alignment.bottomLeft,
+                                          children: [
+                                            ClipRRect(
+                                              borderRadius:
+                                                  BorderRadius.vertical(
+                                                    top: Radius.circular(24.r),
+                                                  ),
+                                              child: CachedNetworkImage(
+                                                placeholder: (context, url) =>
+                                                    CircularProgressIndicator(),
+                                                errorWidget:
+                                                    (context, url, error) =>
+                                                        Icon(Icons.error),
+                                                height: 180.h,
+                                                width: double.infinity,
+                                                fit: BoxFit.cover,
+                                                imageUrl: landMark.mainImage,
+                                              ),
+                                            ),
+                                            Padding(
+                                              padding: EdgeInsets.all(12.r),
+                                              child: Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment.end,
+                                                children: [
+                                                  Text(
+                                                    landMark.name,
+                                                    style: TextStyle(
+                                                      color: kWhite,
+                                                      fontSize: 16.sp,
+                                                    ),
+                                                  ),
+                                                  Text(
+                                                    landMark.location,
+                                                    style: TextStyle(
+                                                      color: kWhite,
+                                                      fontSize: 14.sp,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          ],
                                         ),
-                                        Padding(
-                                          padding: EdgeInsets.all(12.r),
-                                          child: Column(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.end,
-                                            children: [
-                                              Text(
-                                                landMark.name,
-                                                style: TextStyle(
-                                                  color: kWhite,
-                                                  fontSize: 16.sp,
-                                                ),
+                                        BlocBuilder<
+                                          LandMarkFavoritesCubit,
+                                          LandMarkFavoritesState
+                                        >(
+                                          builder: (context, favState) {
+                                            final favCubit = context
+                                                .read<LandMarkFavoritesCubit>();
+                                            final isFav = favCubit.isFavorite(
+                                              landMark,
+                                            );
+
+                                            return IconButton(
+                                              icon: Icon(
+                                                isFav
+                                                    ? Icons.favorite
+                                                    : Icons.favorite_border,
+                                                color: isFav
+                                                    ? Colors.red
+                                                    : Colors.white,
                                               ),
-                                              Text(
-                                                landMark.location,
-                                                style: TextStyle(
-                                                  color: kWhite,
-                                                  fontSize: 14.sp,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
+                                              onPressed: () {
+                                                favCubit.toggleFavorite(
+                                                  landMark,
+                                                );
+                                              },
+                                            );
+                                          },
                                         ),
                                       ],
                                     ),

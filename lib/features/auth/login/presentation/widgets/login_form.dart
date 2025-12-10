@@ -26,10 +26,11 @@ class LoginForm extends StatelessWidget {
         await prefs.setString('userEmail', user.email ?? '');
         await prefs.setString('userName', user.displayName ?? 'User');
         await prefs.setString('userUID', user.uid);
-
+        if (!context.mounted) return;
         GoRouter.of(context).pushReplacement(AppRouter.kNavigationView);
       }
     } catch (e) {
+      if (!context.mounted) return;
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text(e.toString())));
